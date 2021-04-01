@@ -24,6 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
@@ -49,10 +50,14 @@ type VolumeSnapshotter struct {
 }
 
 // takes AWS session options to create a new session
-func getSession(options session.Options) (*session.Session, error) {
+func getSession(options session.Options, assumeRole string) (*session.Session, error) {
 	sess, err := session.NewSessionWithOptions(options)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	if assumeRole != "" {
+		sess.Config.WithCredentials(stscreds.NewCredentials(sess, assumeRole))
 	}
 
 	if _, err := sess.Config.Credentials.Get(); err != nil {
@@ -79,7 +84,7 @@ func (b *VolumeSnapshotter) Init(config map[string]string) error {
 	awsConfig := aws.NewConfig().WithRegion(region)
 
 	sessionOptions := session.Options{Config: *awsConfig, Profile: credentialProfile}
-	sess, err := getSession(sessionOptions)
+	sess, err := getSession(sessionOptions, "")
 	if err != nil {
 		return err
 	}

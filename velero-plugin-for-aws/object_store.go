@@ -42,6 +42,7 @@ import (
 
 const (
 	s3URLKey                 = "s3Url"
+	s3AssumeRole             = "s3AssumeRole"
 	publicURLKey             = "publicUrl"
 	kmsKeyIDKey              = "kmsKeyId"
 	s3ForcePathStyleKey      = "s3ForcePathStyle"
@@ -88,6 +89,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 	if err := veleroplugin.ValidateObjectStoreConfigKeys(config,
 		regionKey,
 		s3URLKey,
+		s3AssumeRole,
 		publicURLKey,
 		kmsKeyIDKey,
 		s3ForcePathStyleKey,
@@ -103,6 +105,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 	var (
 		region                   = config[regionKey]
 		s3URL                    = config[s3URLKey]
+		s3AssumeRole             = config[s3AssumeRole]
 		publicURL                = config[publicURLKey]
 		kmsKeyID                 = config[kmsKeyIDKey]
 		s3ForcePathStyleVal      = config[s3ForcePathStyleKey]
@@ -175,7 +178,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 		return err
 	}
 
-	serverSession, err := getSession(sessionOptions)
+	serverSession, err := getSession(sessionOptions, s3AssumeRole)
 	if err != nil {
 		return err
 	}
@@ -203,7 +206,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 			return err
 		}
 
-		publicSession, err := getSession(publicSessionOptions)
+		publicSession, err := getSession(publicSessionOptions, s3AssumeRole)
 		if err != nil {
 			return err
 		}
